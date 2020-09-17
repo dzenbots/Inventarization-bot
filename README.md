@@ -1,0 +1,1 @@
+# Inventarization-bot
