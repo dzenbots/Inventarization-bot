@@ -4,10 +4,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 
 class GoogleSheetOperator(object):
-    spreadsheet_id: str
 
     def __init__(self, spreadsheet_id, credentials_file_name):
-        self.spreadsheetId = spreadsheet_id
+        self.spreadsheet_id = spreadsheet_id
         self.credentials = ServiceAccountCredentials.from_json_keyfile_name(
             credentials_file_name,
             ['https://www.googleapis.com/auth/spreadsheets',
@@ -25,7 +24,7 @@ class GoogleSheetOperator(object):
             ).execute()
         except Exception as e:
             return values
-        return values
+        return values.get('values')
 
     def write_data_to_range(self, list_name, range_in_list, data, majorDimension='ROWS'):
         try:
@@ -43,3 +42,15 @@ class GoogleSheetOperator(object):
             ).execute()
         except Exception as e:
             return
+
+
+class GoogleSynchronizer(GoogleSheetOperator):
+
+    def __init__(self, spreadsheet_id, credentials_file_name):
+        super().__init__(spreadsheet_id, credentials_file_name)
+
+    def get_positions(self):
+        position_list = self.read_range()
+
+    def get_movements_list(self):
+        pass
