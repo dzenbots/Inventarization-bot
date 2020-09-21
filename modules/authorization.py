@@ -7,6 +7,8 @@ from telebot.types import Message
 from modules.models import User
 
 load_dotenv()
+
+
 def authorized(message: Message, bot: TeleBot):
     user, created = User.get_or_create(telegram_id=message.chat.id, defaults={'status': 'registration',
                                                                               'authorized': 0})
@@ -20,7 +22,7 @@ def authorized(message: Message, bot: TeleBot):
             bot.send_message(chat_id=message.chat.id, text="Авторизация пройдена")
             return True
         else:
-            bot.send_message(chat_id=message.chat.id, text="Авторизация не пройдена. Попробуй еще раз")
+            bot.send_message(chat_id=message.chat.id, text="Авторизация не пройдена. Попробуйте ввести пароль еще раз")
             return False
     if user.authorized == 1:
         return True
