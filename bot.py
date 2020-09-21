@@ -20,6 +20,9 @@ users = {}
 
 # User.delete().where(User.telegram_id == '190737618').execute()
 
+# User.drop_table()
+
+
 @bot.message_handler(commands=['start'])
 def start(message: Message):
     if authorized(message=message, bot=bot):
@@ -29,18 +32,25 @@ def start(message: Message):
 @bot.message_handler(content_types=['text'])
 def plain_text_message(message: Message):
     if authorized(message=message, bot=bot):
-        users[f'{message.chat.id}'] = {
-            'operator': GoogleSynchronizer(spreadsheet_id=os.environ.get('SPREADSHEET_ID'),
-                                           credentials_file_name=os.environ.get('CREDENTIAL_FILE'))
-        }
+        if users.get(f'{message.chat.id}') is None:
+            users[f'{message.chat.id}'] = {
+                'operator': GoogleSynchronizer(spreadsheet_id=os.environ.get('SPREADSHEET_ID'),
+                                               credentials_file_name=os.environ.get('CREDENTIAL_FILE'))
+            }
         if message.text == 'На главную':
             bot.send_message(chat_id=message.chat.id, text='Мои функции', reply_markup=main_inline_keyboard)
+            return
+        if User.get(telegram_id=message.chat.id).status == 'main_search':
+            pass
 
 
 @bot.callback_query_handler(func=lambda call: call.data == MAIN_SEARCH_CALLBACK)
 def main_search(call):
     if authorized(message=call.message, bot=bot):
         User.update(status='main_search').where(User.telegram_id == call.message.chat.id).execute()
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text='Введите инвентарный номер оборудования')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == MAIN_MOVE_CALLBACK)
