@@ -3,3 +3,4 @@ venv
 *creads.json
 .env
 __pycache__
+*.sqlite3
