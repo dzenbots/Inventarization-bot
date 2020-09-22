@@ -18,6 +18,15 @@ bot = TeleBot(token=os.environ.get('BOT_TOKEN'))
 users = {}
 
 
+def found_item(item):
+    return f"""Я нашел оборудование:
+ID: {item.it_id}
+Инвентарный номер: {item.it_id}
+Тип: {item.type}
+Марка: {item.mark}
+Модель: {item.model}
+Серийный номер: {item.serial_num}"""
+
 # User.delete().where(User.telegram_id == '190737618').execute()
 
 # User.drop_table()
@@ -38,10 +47,18 @@ def plain_text_message(message: Message):
                                                credentials_file_name=os.environ.get('CREDENTIAL_FILE'))
             }
         if message.text == 'На главную':
+            User.update(status='').where(User.telegram_id == message.chat.id).execute()
             bot.send_message(chat_id=message.chat.id, text='Мои функции', reply_markup=main_inline_keyboard)
             return
         if User.get(telegram_id=message.chat.id).status == 'main_search':
-            pass
+            invent_num = message.text
+            bot.send_message(chat_id=message.chat.id, text=f'Ищу оборудование с инвентарным номером {invent_num}')
+            found_items = Equipment.select().where(Equipment.invent_num == invent_num)
+            if len(found_items) != 0:
+                for item in found_items:
+                    bot.send_message(chat_id=message.chat.id, text=found_item(item))
+            else:
+                bot.send_message(chat_id=message.chat.id, text='Я не нашел оборудование с указанным инвентарным номером')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == MAIN_SEARCH_CALLBACK)

@@ -50,7 +50,7 @@ class GoogleSynchronizer(GoogleSheetOperator):
         super().__init__(spreadsheet_id, credentials_file_name)
 
     def get_equipmets(self):
-        return self.read_range(list_name='Список оборудования' ,range_in_list='A2:F')
+        return self.read_range(list_name='Список оборудования', range_in_list='A2:F')
 
     def get_movements_list(self):
-        pass
+        return self.read_range(list_name='Перемещение оборудования', range_in_list='A2:D')
