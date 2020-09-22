@@ -27,7 +27,6 @@ ID: {item.it_id}
 Модель: {item.model}
 Серийный номер: {item.serial_num}"""
 
-# User.delete().where(User.telegram_id == '190737618').execute()
 
 # User.drop_table()
 
@@ -58,7 +57,8 @@ def plain_text_message(message: Message):
                 for item in found_items:
                     bot.send_message(chat_id=message.chat.id, text=found_item(item))
             else:
-                bot.send_message(chat_id=message.chat.id, text='Я не нашел оборудование с указанным инвентарным номером')
+                bot.send_message(chat_id=message.chat.id,
+                                 text='Я не нашел оборудование с указанным инвентарным номером')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == MAIN_SEARCH_CALLBACK)
