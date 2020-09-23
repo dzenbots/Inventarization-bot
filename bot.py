@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from telebot import TeleBot, apihelper
 from telebot.types import Message
 
-from modules.GoogleSheetsAPI import GoogleSheetOperator, GoogleSynchronizer
+from modules.GoogleSheetsAPI import GoogleSynchronizer
 from modules.authorization import authorized
 from modules.keyboards import main_inline_keyboard, MAIN_SEARCH_CALLBACK, MAIN_MOVE_CALLBACK, MAIN_SYNC_CALLBACK, \
     go_main_keyboard
