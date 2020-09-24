@@ -28,7 +28,7 @@ class Equipment(BaseModel):
 
 
 class Movement(BaseModel):
-    it_id = ForeignKeyField(Equipment, backref='equipment')
+    it_id = ForeignKeyField(Equipment, backref="movements")
     korpus = CharField()
     room = CharField()
 

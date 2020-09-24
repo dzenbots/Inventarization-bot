@@ -20,3 +20,21 @@ search_keyboard_button1 = InlineKeyboardButton(text='По инвентарном
 search_keyboard_button2 = InlineKeyboardButton(text='По серийному номеру', callback_data=SERIAL_SEARCH)
 search_keyboard.row(search_keyboard_button1)
 search_keyboard.row(search_keyboard_button2)
+
+
+korpusa_keyboard = InlineKeyboardMarkup()
+korpus_button = []
+korpus_button.append(InlineKeyboardButton(text='УК 1', callback_data='UK1'))
+korpus_button.append(InlineKeyboardButton(text='УК 2', callback_data='UK2'))
+korpus_button.append(InlineKeyboardButton(text='УК 3', callback_data='UK3'))
+korpus_button.append(InlineKeyboardButton(text='УК 4', callback_data='UK4'))
+korpus_button.append(InlineKeyboardButton(text='УК 5', callback_data='UK5'))
+korpus_button.append(InlineKeyboardButton(text='УК 6', callback_data='UK6'))
+korpus_button.append(InlineKeyboardButton(text='УК 7', callback_data='UK7'))
+korpus_button.append(InlineKeyboardButton(text='УК 8', callback_data='UK8'))
+korpus_button.append(InlineKeyboardButton(text='УК 9', callback_data='UK9'))
+korpus_button.append(InlineKeyboardButton(text='УК 10', callback_data='UK10'))
+
+for i in korpus_button:
+    korpusa_keyboard.row(i)
+
