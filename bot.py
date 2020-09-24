@@ -2,13 +2,13 @@ import os
 
 from dotenv import load_dotenv
 from telebot import TeleBot, apihelper
-from telebot.types import Message
+from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from modules.GoogleSheetsAPI import GoogleSynchronizer
 from modules.authorization import authorized
-from modules.keyboards import main_inline_keyboard, MAIN_SEARCH_CALLBACK, MAIN_MOVE_CALLBACK, MAIN_SYNC_CALLBACK, \
-    go_main_keyboard
-from modules.models import initialize_db, User, Equipment
+from modules.keyboards import main_inline_keyboard, MAIN_SEARCH_CALLBACK, MAIN_SYNC_CALLBACK, \
+    go_main_keyboard, search_keyboard, INVENT_SEARCH, SERIAL_SEARCH
+from modules.models import initialize_db, User, Equipment, Movement
 
 load_dotenv()
 initialize_db()
@@ -18,25 +18,31 @@ bot = TeleBot(token=os.environ.get('BOT_TOKEN'))
 users = {}
 
 
-def found_item(item):
+def found_item(item, movement):
     return f"""Я нашел оборудование:
 ID: {item.it_id}
-Инвентарный номер: {item.it_id}
+Инвентарный номер: {item.invent_num}
 Тип: {item.type}
 Марка: {item.mark}
 Модель: {item.model}
-Серийный номер: {item.serial_num}"""
+Серийный номер: {item.serial_num}
+
+Корпус: {movement.korpus}
+Кабинет: {movement.room}"""
 
 
 # User.drop_table()
+# Equipment.drop_table()
 
 
+# Команда start
 @bot.message_handler(commands=['start'])
 def start(message: Message):
     if authorized(message=message, bot=bot):
         bot.send_message(chat_id=message.chat.id, text='С возвращением!', reply_markup=go_main_keyboard)
 
 
+# Обработка текстовых сообщений
 @bot.message_handler(content_types=['text'])
 def plain_text_message(message: Message):
     if authorized(message=message, bot=bot):
@@ -49,31 +55,74 @@ def plain_text_message(message: Message):
             User.update(status='').where(User.telegram_id == message.chat.id).execute()
             bot.send_message(chat_id=message.chat.id, text='Мои функции', reply_markup=main_inline_keyboard)
             return
-        if User.get(telegram_id=message.chat.id).status == 'main_search':
+        if User.get(telegram_id=message.chat.id).status == INVENT_SEARCH:
             invent_num = message.text
             bot.send_message(chat_id=message.chat.id, text=f'Ищу оборудование с инвентарным номером {invent_num}')
             found_items = Equipment.select().where(Equipment.invent_num == invent_num)
             if len(found_items) != 0:
                 for item in found_items:
-                    bot.send_message(chat_id=message.chat.id, text=found_item(item))
+                    movement, created = Movement.get_or_create(it_id=item.it_id,
+                                                               defaults={
+                                                                   'korpus': 'N/A',
+                                                                   'room': 'N/A'
+                                                               })
+                    move_key = InlineKeyboardMarkup()
+                    button = InlineKeyboardButton(text='Переместить', callback_data=f'Move_{item.it_id}')
+                    move_key.row(button)
+                    bot.send_message(chat_id=message.chat.id, text=found_item(item, movement), reply_markup=move_key)
             else:
                 bot.send_message(chat_id=message.chat.id,
                                  text='Я не нашел оборудование с указанным инвентарным номером')
+        if User.get(telegram_id=message.chat.id).status == SERIAL_SEARCH:
+            serial_num = message.text
+            bot.send_message(chat_id=message.chat.id, text=f'Ищу оборудование с серийным номером {serial_num}')
+            found_items = Equipment.select().where(Equipment.serial_num == serial_num)
+            if len(found_items) != 0:
+                for item in found_items:
+                    movement, created = Movement.get_or_create(it_id=item.it_id,
+                                                               defaults={
+                                                                   'korpus': 'N/A',
+                                                                   'room': 'N/A'
+                                                               })
+                    move_key = InlineKeyboardMarkup()
+                    button = InlineKeyboardButton(text='Переместить', callback_data=f'Move_{item.it_id}')
+                    move_key.row(button)
+                    bot.send_message(chat_id=message.chat.id, text=found_item(item, movement), reply_markup=move_key)
+            else:
+                bot.send_message(chat_id=message.chat.id,
+                                 text='Я не нашел оборудование с указанным серийным номером')
+        User.update(status='').where(User.telegram_id == message.chat.id).execute()
 
 
+# Выбор параметра поиска
 @bot.callback_query_handler(func=lambda call: call.data == MAIN_SEARCH_CALLBACK)
 def main_search(call):
     if authorized(message=call.message, bot=bot):
-        User.update(status='main_search').where(User.telegram_id == call.message.chat.id).execute()
+        User.update(status=MAIN_SEARCH_CALLBACK).where(User.telegram_id == call.message.chat.id).execute()
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text='По какому параметру ищем?',
+                              reply_markup=search_keyboard)
+
+
+# Выбор поиска по инвентарному номеру
+@bot.callback_query_handler(func=lambda call: call.data == INVENT_SEARCH)
+def invent_search(call):
+    if authorized(message=call.message, bot=bot):
+        User.update(status=INVENT_SEARCH).where(User.telegram_id == call.message.chat.id).execute()
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text='Введите инвентарный номер оборудования')
 
 
-@bot.callback_query_handler(func=lambda call: call.data == MAIN_MOVE_CALLBACK)
-def main_move(call):
+# Выбор поиска по серийному номеру
+@bot.callback_query_handler(func=lambda call: call.data == SERIAL_SEARCH)
+def serial_search(call):
     if authorized(message=call.message, bot=bot):
-        pass
+        User.update(status=SERIAL_SEARCH).where(User.telegram_id == call.message.chat.id).execute()
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text='Введите серийный номер оборудования')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == MAIN_SYNC_CALLBACK)
