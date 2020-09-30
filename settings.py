@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BOT_PROXY = os.environ.get('BOT_PROXY')
+BOT_PROXY = {'https': os.environ.get('BOT_PROXY')}
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
 SPREADSHEET_ID = os.environ.get('SPREADSHEET_ID')
