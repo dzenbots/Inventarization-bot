@@ -56,7 +56,6 @@ class GoogleSynchronizer(GoogleSheetOperator):
         return self.read_range(list_name='Перемещение оборудования', range_in_list='A2:D')
 
     def sync_moves(self, start_line, data):
-        print(f'A{start_line}:D')
         self.write_data_to_range(list_name='Перемещение оборудования',
                                  range_in_list=f'A{start_line}:D',
                                  data=data)

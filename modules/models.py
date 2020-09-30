@@ -1,10 +1,8 @@
-import os
-
-from dotenv import load_dotenv
 from peewee import Model, SqliteDatabase, CharField, IntegerField, ForeignKeyField
 
-load_dotenv()
-db = SqliteDatabase(os.environ.get('DB_FILE_PATH'))
+from modules.settings import DB_FILE_PATH
+
+db = SqliteDatabase(DB_FILE_PATH)
 
 
 class BaseModel(Model):
@@ -25,6 +23,7 @@ class Equipment(BaseModel):
     mark = CharField()
     model = CharField()
     serial_num = CharField()
+    is_modified = CharField()
 
 
 class Movement(BaseModel):
