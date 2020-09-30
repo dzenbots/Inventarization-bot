@@ -1,6 +1,6 @@
 from peewee import Model, SqliteDatabase, CharField, IntegerField, ForeignKeyField
 
-from modules.settings import DB_FILE_PATH
+from settings import DB_FILE_PATH
 
 db = SqliteDatabase(DB_FILE_PATH)
 

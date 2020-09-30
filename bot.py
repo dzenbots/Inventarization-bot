@@ -6,11 +6,11 @@ from modules.authorization import authorized
 from modules.keyboards import main_inline_keyboard, MAIN_SYNC_CALLBACK, \
     go_main_keyboard, search_keyboard, korpusa_keyboard, get_edit_inline_keyboard
 from modules.models import initialize_db, User, Equipment, Movement
-from modules.settings import BOT_PROXY, BOT_TOKEN, SPREADSHEET_ID, CREDENTIAL_FILE, bot_messages_text, \
+from settings import BOT_PROXY, BOT_TOKEN, SPREADSHEET_ID, CREDENTIAL_FILE, bot_messages_text, \
     main_reply_keyboard_text, callbacks, INVENT_SEARCH, SERIAL_SEARCH, MAIN_SEARCH, MAIN_EDIT
 
 initialize_db()
-apihelper.proxy = {'https': BOT_PROXY}
+apihelper.proxy = BOT_PROXY
 bot = TeleBot(token=BOT_TOKEN)
 
 users = {}

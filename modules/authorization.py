@@ -3,7 +3,7 @@ from telebot.types import Message
 
 from modules.keyboards import go_main_keyboard
 from modules.models import User
-from modules.settings import USER_SECRET, FINISH_REGISTRATION, IN_REGISTRATION_PROCCESS, bot_messages_text
+from settings import USER_SECRET, FINISH_REGISTRATION, IN_REGISTRATION_PROCCESS, bot_messages_text
 
 
 def authorized(message: Message, bot: TeleBot):

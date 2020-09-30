@@ -1,6 +1,6 @@
 from telebot.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
-from modules.settings import main_reply_keyboard_text, callbacks
+from settings import main_reply_keyboard_text, callbacks
 
 # MAIN_SEARCH_CALLBACK = 'Main_Search'
 MAIN_SYNC_CALLBACK = 'Main_Sync'
