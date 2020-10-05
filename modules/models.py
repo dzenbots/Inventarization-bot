@@ -18,12 +18,12 @@ class User(BaseModel):
 
 class Equipment(BaseModel):
     it_id = CharField(unique=True)
+    pos_in_buh = CharField()
     invent_num = CharField()
     type = CharField()
     mark = CharField()
     model = CharField()
     serial_num = CharField()
-    is_modified = CharField()
 
 
 class Movement(BaseModel):

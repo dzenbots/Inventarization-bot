@@ -106,7 +106,26 @@ def plain_text_message(message: Message):
                       and Movement.room == '___'). \
                 execute()
             bot.send_message(chat_id=message.chat.id,
-                             text='Перемещение выполнено. Не забудьте выполнить синхронизацию!')
+                             text=bot_messages_text.get('complete_move'))
+
+        if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-mark':
+            Equipment.update(mark=message.text).\
+                where(Movement.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]).\
+                execute()
+            bot.send_message(chat_id=message.chat.id,
+                             text=bot_messages_text.get('edit_complete'))
+        if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-model':
+            Equipment.update(model=message.text). \
+                where(Movement.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
+                execute()
+            bot.send_message(chat_id=message.chat.id,
+                             text=bot_messages_text.get('edit_complete'))
+        if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-serial':
+            Equipment.update(serial_num=message.text). \
+                where(Movement.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
+                execute()
+            bot.send_message(chat_id=message.chat.id,
+                             text=bot_messages_text.get('edit_complete'))
         User.update(status='').where(User.telegram_id == message.chat.id).execute()
 
 
@@ -147,7 +166,7 @@ def main_edit(call):
     if authorized(message=call.message, bot=bot):
         User.update(status=MAIN_EDIT).where(User.telegram_id == call.message.chat.id).execute()
         bot.send_message(chat_id=call.message.chat.id,
-                         text='Что редактировать?',
+                         text=bot_messages_text.get('what_edit'),
                          reply_markup=get_edit_inline_keyboard(it_id=call.data.split('_')[1]))
 
 
@@ -155,23 +174,30 @@ def main_edit(call):
 @bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'edit-mark')
 def main_edit(call):
     if authorized(message=call.message, bot=bot):
+        User.update(status=call.data).where(User.telegram_id == call.message.chat.id).execute()
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
-                              text=bot_messages_text.get('enter_serial_num'))
+                              text=bot_messages_text.get('enter_new_mark'))
 
 
-# Вввод новой модели
+# Ввод новой модели
 @bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'edit-model')
 def main_edit(call):
     if authorized(message=call.message, bot=bot):
-        pass
+        User.update(status=call.data).where(User.telegram_id == call.message.chat.id).execute()
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text=bot_messages_text.get('enter_new_model'))
 
 
 # Ввод нового серийника
 @bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'edit-serial')
 def main_edit(call):
     if authorized(message=call.message, bot=bot):
-        pass
+        User.update(status=call.data).where(User.telegram_id == call.message.chat.id).execute()
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text=bot_messages_text.get('enter_new_serial'))
 
 
 # Выбор корпуса для перемещения
@@ -186,11 +212,11 @@ def main_move(call):
 
 
 # Выбор кабинета в корпусе для перемещения
-@bot.callback_query_handler(func=lambda call: call.data[:2] == 'UK')
+@bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'UK')
 def choose_uk(call):
     if authorized(message=call.message, bot=bot):
         if User.get(telegram_id=call.message.chat.id).status.split('_')[0] == 'Move':
-            uk_num = call.data[2:]
+            uk_num = call.data.split('_')[1]
             it_id = User.get(telegram_id=call.message.chat.id).status.split('_')[1]
             Movement.create(it_id=it_id,
                             korpus=f'УК {uk_num}',
@@ -219,12 +245,12 @@ def main_sync(call):
                     item.append('')
             Equipment.get_or_create(it_id=item[0],
                                     defaults={
+                                        'pos_in_buh': item[1],
                                         'invent_num': item[2],
                                         'type': item[3],
                                         'mark': item[4],
                                         'model': item[5],
-                                        'serial_num': item[6],
-                                        'is_modified': '0'})
+                                        'serial_num': item[6]})
         User.update(status='').where(User.telegram_id == call.message.chat.id).execute()
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,

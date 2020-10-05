@@ -35,9 +35,12 @@ bot_messages_text = {'start_registration': 'Для авторизации вве
                      'item_not_found': 'Я не нашел оборудование с указанным инвентарным номером',
                      'change_values': 'Изменить данные',
                      'move': 'Переместить',
-                     'enter_new_mark': 'Введите новое имя марки',
+                     'enter_new_mark': 'Введите новое название марки',
                      'enter_new_model': 'Введите новое название модели',
-                     'enter_new_serial': 'Введите новый серийный номер'}
+                     'enter_new_serial': 'Введите новый серийный номер',
+                     'what_edit': 'Что редактировать?',
+                     'complete_move': 'Перемещение выполнено',
+                     'edit_complete': 'Редактирование завершено'}
 
 # button text at the end of screen (reply_keyboard)
 main_reply_keyboard_text = 'На главную'
