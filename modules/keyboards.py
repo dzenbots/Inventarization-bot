@@ -2,8 +2,6 @@ from telebot.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeybo
 
 from settings import main_reply_keyboard_text, callbacks
 
-# MAIN_SEARCH_CALLBACK = 'Main_Search'
-MAIN_SYNC_CALLBACK = 'Main_Sync'
 
 go_main_keyboard = ReplyKeyboardMarkup(True)
 go_main_keyboard.row(main_reply_keyboard_text)
@@ -12,7 +10,7 @@ main_inline_keyboard = InlineKeyboardMarkup()
 main_inline_keyboard.row(InlineKeyboardButton(text='Поиск и перемещение оборудования',
                                               callback_data=callbacks.get('main_search')))
 main_inline_keyboard.row(InlineKeyboardButton(text='Синхронизация с Google-таблицей',
-                                              callback_data=MAIN_SYNC_CALLBACK))
+                                              callback_data=callbacks.get('get_equipments')))
 
 search_keyboard = InlineKeyboardMarkup()
 search_keyboard.row(InlineKeyboardButton(text='По инвентарному номеру',
@@ -23,6 +21,8 @@ search_keyboard.row(InlineKeyboardButton(text='По серийному номе�
 
 def get_edit_inline_keyboard(it_id):
     main_edit_inline_keyboard = InlineKeyboardMarkup()
+    main_edit_inline_keyboard.row(
+        InlineKeyboardButton(text='Тип', callback_data=callbacks.get('type').format(it_id=it_id)))
     main_edit_inline_keyboard.row(
         InlineKeyboardButton(text='Марка', callback_data=callbacks.get('mark').format(it_id=it_id)))
     main_edit_inline_keyboard.row(

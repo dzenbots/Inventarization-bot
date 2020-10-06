@@ -3,8 +3,8 @@ from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from modules.GoogleSheetsAPI import GoogleSynchronizer
 from modules.authorization import authorized
-from modules.keyboards import main_inline_keyboard, MAIN_SYNC_CALLBACK, \
-    go_main_keyboard, search_keyboard, korpusa_keyboard, get_edit_inline_keyboard
+from modules.keyboards import main_inline_keyboard, go_main_keyboard, search_keyboard, \
+    korpusa_keyboard, get_edit_inline_keyboard
 from modules.models import initialize_db, User, Equipment, Movement
 from settings import BOT_PROXY, BOT_TOKEN, SPREADSHEET_ID, CREDENTIAL_FILE, bot_messages_text, \
     main_reply_keyboard_text, callbacks, INVENT_SEARCH, SERIAL_SEARCH, MAIN_SEARCH, MAIN_EDIT
@@ -100,30 +100,47 @@ def plain_text_message(message: Message):
                                  text=bot_messages_text.get('item_not_found'))
 
         # Выполнить перемещение в базе
-        if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'Move':
+        if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'MOVE':
             Movement.update(room=message.text). \
                 where(Movement.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]
-                      and Movement.room == '___'). \
+                      and Movement.room == 'N/A'). \
                 execute()
+            users[f'{message.chat.id}'].get('operator').add_new_movement(
+                id=User.get(telegram_id=message.chat.id).status.split('_')[1])
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('complete_move'))
 
-        if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-mark':
-            Equipment.update(mark=message.text).\
-                where(Movement.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]).\
+        if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-type':
+            Equipment.update(type=message.text). \
+                where(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
                 execute()
+            users[f'{message.chat.id}'].get('operator').edit_in_table(
+                item=Equipment.get(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]))
+            bot.send_message(chat_id=message.chat.id,
+                             text=bot_messages_text.get('edit_complete'))
+
+        if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-mark':
+            Equipment.update(mark=message.text). \
+                where(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
+                execute()
+            users[f'{message.chat.id}'].get('operator').edit_in_table(
+                item=Equipment.get(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]))
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('edit_complete'))
         if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-model':
             Equipment.update(model=message.text). \
-                where(Movement.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
+                where(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
                 execute()
+            users[f'{message.chat.id}'].get('operator').edit_in_table(
+                item=Equipment.get(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]))
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('edit_complete'))
         if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-serial':
             Equipment.update(serial_num=message.text). \
-                where(Movement.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
+                where(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
                 execute()
+            users[f'{message.chat.id}'].get('operator').edit_in_table(
+                item=Equipment.get(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]))
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('edit_complete'))
         User.update(status='').where(User.telegram_id == message.chat.id).execute()
@@ -180,6 +197,16 @@ def main_edit(call):
                               text=bot_messages_text.get('enter_new_mark'))
 
 
+# Ввод новой марки
+@bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'edit-type')
+def main_edit(call):
+    if authorized(message=call.message, bot=bot):
+        User.update(status=call.data).where(User.telegram_id == call.message.chat.id).execute()
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text=bot_messages_text.get('enter_new_type'))
+
+
 # Ввод новой модели
 @bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'edit-model')
 def main_edit(call):
@@ -215,31 +242,36 @@ def main_move(call):
 @bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'UK')
 def choose_uk(call):
     if authorized(message=call.message, bot=bot):
-        if User.get(telegram_id=call.message.chat.id).status.split('_')[0] == 'Move':
+        if User.get(telegram_id=call.message.chat.id).status.split('_')[0] == 'MOVE':
             uk_num = call.data.split('_')[1]
             it_id = User.get(telegram_id=call.message.chat.id).status.split('_')[1]
-            Movement.create(it_id=it_id,
-                            korpus=f'УК {uk_num}',
-                            room='___')
+            movement, created = Movement.get_or_create(it_id=it_id,
+                                                       korpus='N/A',
+                                                       room='N/A')
+            movement.update(korpus=f'УК {uk_num}').execute()
+            # Movement.create(it_id=it_id,
+            #                 korpus=f'УК {uk_num}',
+            #                 room='___')
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
                                   text=bot_messages_text.get('enter_room_num'))
 
 
-@bot.callback_query_handler(func=lambda call: call.data == MAIN_SYNC_CALLBACK)
+@bot.callback_query_handler(func=lambda call: call.data == callbacks.get('get_equipments'))
 def main_sync(call):
     if authorized(message=call.message, bot=bot):
-        User.update(status='main_sync').where(User.telegram_id == call.message.chat.id).execute()
+        User.update(status=call.data).where(User.telegram_id == call.message.chat.id).execute()
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
-                              text='Выполняется синхронизация')
+                              text=bot_messages_text.get('getting_equipments'))
         values = users[f'{call.message.chat.id}'].get('operator').get_equipments()
         for i in range(len(values)):
             item = values[i]
-            # if i % 10 == 9:
-            #     bot.edit_message_text(chat_id=call.message.chat.id,
-            #                           message_id=call.message.message_id,
-            #                           text=f'Выполняется синхронизация {int(i * 100 / len(values))}%')
+            if i % 50 == 9:
+                bot.edit_message_text(chat_id=call.message.chat.id,
+                                      message_id=call.message.message_id,
+                                      text=bot_messages_text.get('process_equipment_list').format(cur_item=i,
+                                                                                                  sum_item=len(values)))
             if len(item) < 7:
                 for j in range(len(item), 7):
                     item.append('')
@@ -251,29 +283,28 @@ def main_sync(call):
                                         'mark': item[4],
                                         'model': item[5],
                                         'serial_num': item[6]})
-        User.update(status='').where(User.telegram_id == call.message.chat.id).execute()
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
-                              text='Обновляю перемещения')
+                              text=bot_messages_text.get('equipment_list_getting_complete'))
         # Добавить отправку данных из таблицы БД перемещение
-        values = users[f'{call.message.chat.id}'].get('operator').get_movements_list()
-        move_data = []
-        sync_data = []
-        if values == None:
-            values = []
-        movements = Movement.select()
-        for movement in movements:
-            move_data.append(
-                [Equipment.get(id=movement.it_id).it_id, Equipment.get(id=movement.it_id).invent_num, movement.korpus,
-                 movement.room])
-        if len(move_data) > len(values):
-            for i in range(len(values), len(move_data)):
-                sync_data.append(move_data[i])
-            users[f'{call.message.chat.id}'].get('operator').sync_moves(start_line=len(values) + 2,
-                                                                        data=sync_data)
-        bot.edit_message_text(chat_id=call.message.chat.id,
-                              message_id=call.message.message_id,
-                              text='Данные синхронизированы')
+        # values = users[f'{call.message.chat.id}'].get('operator').get_movements_list()
+        # move_data = []
+        # sync_data = []
+        # if values == None:
+        #     values = []
+        # movements = Movement.select()
+        # for movement in movements:
+        #     move_data.append(
+        #         [Equipment.get(id=movement.it_id).it_id, Equipment.get(id=movement.it_id).invent_num, movement.korpus,
+        #          movement.room])
+        # if len(move_data) > len(values):
+        #     for i in range(len(values), len(move_data)):
+        #         sync_data.append(move_data[i])
+        #     users[f'{call.message.chat.id}'].get('operator').sync_moves(start_line=len(values) + 2,
+        #                                                                 data=sync_data)
+        # bot.edit_message_text(chat_id=call.message.chat.id,
+        #                       message_id=call.message.message_id,
+        #                       text='Данные синхронизированы')
 
 
 if __name__ == '__main__':

@@ -2,6 +2,8 @@ import googleapiclient.discovery
 import httplib2
 from oauth2client.service_account import ServiceAccountCredentials
 
+from modules.models import Equipment, Movement
+
 
 class GoogleSheetOperator(object):
 
@@ -41,6 +43,7 @@ class GoogleSheetOperator(object):
                 }
             ).execute()
         except Exception as e:
+            print(e)
             return
 
 
@@ -55,7 +58,21 @@ class GoogleSynchronizer(GoogleSheetOperator):
     def get_movements_list(self):
         return self.read_range(list_name='Перемещение оборудования', range_in_list='A2:D')
 
-    def sync_moves(self, start_line, data):
-        self.write_data_to_range(list_name='Перемещение оборудования',
-                                 range_in_list=f'A{start_line}:D',
+    # def sync_moves(self, start_line, data):
+    #     self.write_data_to_range(list_name='Перемещение оборудования (Тест)',
+    #                              range_in_list=f'A{start_line}:D',
+    #                              data=data)
+
+    def add_new_movement(self, id):
+        count_of_movement = Movement.select().count()
+        movement = Movement.get(Movement.it_id == id)
+        return self.write_data_to_range(list_name='Перемещение оборудования',
+                                        range_in_list=f'A{count_of_movement + 1}:C{count_of_movement + 1}',
+                                        data=[[str(Equipment.get(Equipment.id == movement.it_id).it_id),
+                                               str(movement.korpus), str(movement.room)]])
+
+    def edit_in_table(self, item: Equipment):
+        data = [[item.type, item.mark, item.model, item.serial_num]]
+        self.write_data_to_range(list_name='Список оборудования',
+                                 range_in_list=f'D{int(item.it_id) + 1}:G{int(item.it_id) + 1}',
                                  data=data)

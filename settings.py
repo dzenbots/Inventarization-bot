@@ -35,12 +35,16 @@ bot_messages_text = {'start_registration': 'Для авторизации вве
                      'item_not_found': 'Я не нашел оборудование с указанным инвентарным номером',
                      'change_values': 'Изменить данные',
                      'move': 'Переместить',
+                     'enter_new_type': 'Введите новый тип',
                      'enter_new_mark': 'Введите новое название марки',
                      'enter_new_model': 'Введите новое название модели',
                      'enter_new_serial': 'Введите новый серийный номер',
                      'what_edit': 'Что редактировать?',
                      'complete_move': 'Перемещение выполнено',
-                     'edit_complete': 'Редактирование завершено'}
+                     'edit_complete': 'Редактирование завершено',
+                     'getting_equipments': 'Получение списка оборудования',
+                     'process_equipment_list': 'Обработка {cur_item} / {sum_item}',
+                     'equipment_list_getting_complete': 'Список получен'}
 
 # button text at the end of screen (reply_keyboard)
 main_reply_keyboard_text = 'На главную'
@@ -54,4 +58,6 @@ callbacks = {'main_search': 'main_search',
              'UK': 'UK_{uk}',
              'mark': 'edit-mark_{it_id}',
              'model': 'edit-model_{it_id}',
-             'serial': 'edit-serial_{it_id}'}
+             'serial': 'edit-serial_{it_id}',
+             'type': 'edit-type_{it_id}',
+             'get_equipments': 'get_equipments'}
