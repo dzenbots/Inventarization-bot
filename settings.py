@@ -27,6 +27,7 @@ bot_messages_text = {'start_registration': 'Для авторизации вве
                      'auth_ok': 'Авторизация пройдена', 'welcome_back': 'С возвращением!',
                      'show_functions': 'Мои функции',
                      'invent_search': 'Ищу оборудование с инвентарным номером {invent_num}',
+                     'serial_search': 'Ищу оборудование с инвентарным номером {serial_num}',
                      'searching_parameter': 'По какому параметру ищем?',
                      'enter_invent_num': 'Введите инвентарный номер оборудования',
                      'enter_serial_num': 'Введите серийный номер оборудования',

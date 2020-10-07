@@ -33,6 +33,7 @@ ID: {item.it_id}
 # Шаблон показа найденого оборудрования
 def show_equipments(found_items, bot, message):
     if len(found_items) != 0:
+        users[f'{message.chat.id}']['invent_num_for_show_again'] = found_items[0].invent_num
         movement = None
         for item in found_items:
             temp_movements = item.movements
@@ -40,7 +41,7 @@ def show_equipments(found_items, bot, message):
                 for temp in temp_movements:
                     movement = temp
             else:
-                movement = Movement.create(it_id=item.it_id,
+                movement = Movement.create(it_id=item,
                                            korpus='N/A',
                                            room='N/A')
             item_inline_keyboard = InlineKeyboardMarkup()
@@ -94,6 +95,7 @@ def plain_text_message(message: Message):
         if User.get(telegram_id=message.chat.id).status == INVENT_SEARCH or \
                 User.get(telegram_id=message.chat.id).status == SERIAL_SEARCH:
             found_items = None
+            temp_item = None
             if User.get(telegram_id=message.chat.id).status == INVENT_SEARCH:
                 bot.send_message(chat_id=message.chat.id,
                                  text=bot_messages_text.get('invent_search').format(invent_num=message.text))
@@ -102,13 +104,12 @@ def plain_text_message(message: Message):
                 bot.send_message(chat_id=message.chat.id,
                                  text=bot_messages_text.get('serial_search').format(serial_num=message.text))
                 found_items = Equipment.select().where(Equipment.serial_num == message.text)
-            users[f'{message.chat.id}']['invent_num_for_show_again'] = found_items[0].invent_num
             show_equipments(found_items, bot, message)
 
         # Выполнить перемещение в базе
         if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'MOVE':
             Movement.update(room=message.text). \
-                where(Movement.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]
+                where(Movement.it_id == Equipment.get(it_id=User.get(telegram_id=message.chat.id).status.split('_')[1])
                       and Movement.room == 'N/A'). \
                 execute()
             users[f'{message.chat.id}'].get('operator').add_new_movement(
@@ -269,7 +270,7 @@ def choose_uk(call):
         if User.get(telegram_id=call.message.chat.id).status.split('_')[0] == 'MOVE':
             uk_num = call.data.split('_')[1]
             it_id = User.get(telegram_id=call.message.chat.id).status.split('_')[1]
-            movement = Movement.create(it_id=it_id,
+            movement = Movement.create(it_id=Equipment.get(it_id=it_id),
                                        korpus=f'УК {uk_num}',
                                        room='N/A')
             # movement.update(korpus=f'УК {uk_num}').execute()
@@ -332,4 +333,4 @@ def main_sync(call):
 
 
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    bot.polling(none_stop=False, interval=0, timeout=20)
