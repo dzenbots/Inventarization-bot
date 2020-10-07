@@ -58,14 +58,11 @@ class GoogleSynchronizer(GoogleSheetOperator):
     def get_movements_list(self):
         return self.read_range(list_name='Перемещение оборудования', range_in_list='A2:D')
 
-    # def sync_moves(self, start_line, data):
-    #     self.write_data_to_range(list_name='Перемещение оборудования (Тест)',
-    #                              range_in_list=f'A{start_line}:D',
-    #                              data=data)
-
     def add_new_movement(self, id):
         count_of_movement = Movement.select().count()
-        movement = Movement.get(Movement.it_id == id)
+        movements = Movement.select().where(Movement.it_id == id)
+        for item in movements:
+            movement = item
         return self.write_data_to_range(list_name='Перемещение оборудования',
                                         range_in_list=f'A{count_of_movement + 1}:C{count_of_movement + 1}',
                                         data=[[str(Equipment.get(Equipment.id == movement.it_id).it_id),

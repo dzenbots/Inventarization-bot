@@ -30,6 +30,33 @@ ID: {item.it_id}
 Кабинет: {movement.room}"""
 
 
+# Шаблон показа найденого оборудрования
+def show_equipments(found_items, bot, message):
+    if len(found_items) != 0:
+        movement = None
+        for item in found_items:
+            temp_movements = item.movements
+            if temp_movements.count() > 0:
+                for temp in temp_movements:
+                    movement = temp
+            else:
+                movement = Movement.create(it_id=item.it_id,
+                                           korpus='N/A',
+                                           room='N/A')
+            item_inline_keyboard = InlineKeyboardMarkup()
+            item_inline_keyboard.row(
+                InlineKeyboardButton(text=bot_messages_text.get('change_values'),
+                                     callback_data=callbacks.get('main_edit').format(it_id=item.it_id)))
+            item_inline_keyboard.row(
+                InlineKeyboardButton(text=bot_messages_text.get('move'),
+                                     callback_data=callbacks.get('main_move').format(it_id=item.it_id)))
+            bot.send_message(chat_id=message.chat.id, text=found_item_template(item, movement),
+                             reply_markup=item_inline_keyboard)
+    else:
+        bot.send_message(chat_id=message.chat.id,
+                         text=bot_messages_text.get('item_not_found'))
+
+
 # User.drop_table()
 # Equipment.drop_table()
 # Movement.drop_table()
@@ -75,29 +102,8 @@ def plain_text_message(message: Message):
                 bot.send_message(chat_id=message.chat.id,
                                  text=bot_messages_text.get('serial_search').format(serial_num=message.text))
                 found_items = Equipment.select().where(Equipment.serial_num == message.text)
-            if len(found_items) != 0:
-                movement = None
-                for item in found_items:
-                    temp_movements = item.movements
-                    if temp_movements.count() > 0:
-                        for temp in temp_movements:
-                            movement = temp
-                    else:
-                        movement = Movement.create(it_id=item.it_id,
-                                                   korpus='N/A',
-                                                   room='N/A')
-                    item_inline_keyboard = InlineKeyboardMarkup()
-                    item_inline_keyboard.row(
-                        InlineKeyboardButton(text=bot_messages_text.get('change_values'),
-                                             callback_data=callbacks.get('main_edit').format(it_id=item.it_id)))
-                    item_inline_keyboard.row(
-                        InlineKeyboardButton(text=bot_messages_text.get('move'),
-                                             callback_data=callbacks.get('main_move').format(it_id=item.it_id)))
-                    bot.send_message(chat_id=message.chat.id, text=found_item_template(item, movement),
-                                     reply_markup=item_inline_keyboard)
-            else:
-                bot.send_message(chat_id=message.chat.id,
-                                 text=bot_messages_text.get('item_not_found'))
+            users[f'{message.chat.id}']['invent_num_for_show_again'] = found_items[0].invent_num
+            show_equipments(found_items, bot, message)
 
         # Выполнить перемещение в базе
         if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'MOVE':
@@ -109,6 +115,9 @@ def plain_text_message(message: Message):
                 id=User.get(telegram_id=message.chat.id).status.split('_')[1])
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('complete_move'))
+            found_items = Equipment.select().where(
+                Equipment.invent_num == users[f'{message.chat.id}']['invent_num_for_show_again'])
+            show_equipments(found_items, bot, message)
 
         if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-type':
             Equipment.update(type=message.text). \
@@ -118,6 +127,9 @@ def plain_text_message(message: Message):
                 item=Equipment.get(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]))
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('edit_complete'))
+            found_items = Equipment.select().where(
+                Equipment.invent_num == users[f'{message.chat.id}']['invent_num_for_show_again'])
+            show_equipments(found_items, bot, message)
 
         if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-mark':
             Equipment.update(mark=message.text). \
@@ -127,6 +139,10 @@ def plain_text_message(message: Message):
                 item=Equipment.get(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]))
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('edit_complete'))
+            found_items = Equipment.select().where(
+                Equipment.invent_num == users[f'{message.chat.id}']['invent_num_for_show_again'])
+            show_equipments(found_items, bot, message)
+
         if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-model':
             Equipment.update(model=message.text). \
                 where(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
@@ -135,6 +151,10 @@ def plain_text_message(message: Message):
                 item=Equipment.get(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]))
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('edit_complete'))
+            found_items = Equipment.select().where(
+                Equipment.invent_num == users[f'{message.chat.id}']['invent_num_for_show_again'])
+            show_equipments(found_items, bot, message)
+
         if User.get(telegram_id=message.chat.id).status.split('_')[0] == 'edit-serial':
             Equipment.update(serial_num=message.text). \
                 where(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]). \
@@ -143,6 +163,10 @@ def plain_text_message(message: Message):
                 item=Equipment.get(Equipment.it_id == User.get(telegram_id=message.chat.id).status.split('_')[1]))
             bot.send_message(chat_id=message.chat.id,
                              text=bot_messages_text.get('edit_complete'))
+            found_items = Equipment.select().where(
+                Equipment.invent_num == users[f'{message.chat.id}']['invent_num_for_show_again'])
+            show_equipments(found_items, bot, message)
+
         User.update(status='').where(User.telegram_id == message.chat.id).execute()
 
 
@@ -245,10 +269,10 @@ def choose_uk(call):
         if User.get(telegram_id=call.message.chat.id).status.split('_')[0] == 'MOVE':
             uk_num = call.data.split('_')[1]
             it_id = User.get(telegram_id=call.message.chat.id).status.split('_')[1]
-            movement, created = Movement.get_or_create(it_id=it_id,
-                                                       korpus='N/A',
-                                                       room='N/A')
-            movement.update(korpus=f'УК {uk_num}').execute()
+            movement = Movement.create(it_id=it_id,
+                                       korpus=f'УК {uk_num}',
+                                       room='N/A')
+            # movement.update(korpus=f'УК {uk_num}').execute()
             # Movement.create(it_id=it_id,
             #                 korpus=f'УК {uk_num}',
             #                 room='___')
