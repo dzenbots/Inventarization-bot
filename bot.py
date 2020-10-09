@@ -1,3 +1,5 @@
+import time
+
 from telebot import TeleBot, apihelper
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -333,4 +335,9 @@ def main_sync(call):
 
 
 if __name__ == '__main__':
-    bot.polling(none_stop=False, interval=0, timeout=20)
+    while True:
+        try:
+            bot.polling(none_stop=False, interval=0, timeout=20)
+        except Exception as e:
+            print(e)
+            time.sleep(15)
